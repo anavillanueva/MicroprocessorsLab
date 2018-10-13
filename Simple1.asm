@@ -11,9 +11,7 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	bsf	EECON1, EEPGD 	; access Flash program memory
 	
 	goto	start
-	; ******* My data and where to put it in RAM *
-	constant 	myArray=0x400	; Address in RAM for data
-	constant 	counter=0x10	; Address of counter variable
+	
 	; ******* Main programme *********************
 start 	lfsr	FSR0, 0x002	    ; Load FSR0 with starting recording address
 				    ; Load the count in 0x00 and 0x01
