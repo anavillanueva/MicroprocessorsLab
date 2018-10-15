@@ -9,7 +9,7 @@
 	; ******* Programme FLASH read Setup Code ****  
 setup	bcf	EECON1, CFGS	; point to Flash program memory  
 	bsf	EECON1, EEPGD 	; access Flash program memory
-	
+	BSF EECON1, WREN ; enable write to memory
 	goto	start
 	
 	; ******* Main programme *********************
@@ -25,6 +25,7 @@ loop8bit
 	incf    0x00, 1 ,ACCESS	    ; Increment count by 1
 	call	add8Bit		    ; Add the first 8-bits to RAM location and increment FSR by 1
 	
+	
 	movlw	0xFF
 	CPFSEQ  0x00, 0		    ; If count reaches 0xFF, exit loop to add 1 to third hexadec and set first two hexadec to 00, to have 0x100
 	bra     loop8bit	 
@@ -35,8 +36,28 @@ loop8bit
 	movwf   0x00
 	call	add8Bit		    ; Add 0x00 to 0x00 to have the first two numbers in 0x100
 	; Here, we added 0x100 - 0x200 - 0x300... etc. when it is their turn to be added
+	movlw	0x08
+	CPFSEQ  0x01, 0
 	bra	loop8bit
 	
+	
+
+myTable	data	"abcde "
+	;movlw	0x03	    ; Starting reading address
+	;movwf	0x01	    ; Load 0x001 with starting reading address
+	lfsr	FSR0, 0x002	    ; Load FSR0 with starting recording address
+	movlw	high(myTable)
+	movwf	TBLPTRH
+	movlw	low(myTable)
+	movwf	TBLPTRL
+write	
+	movff   POSTINC0, WREG	    ;Increases FSR and then stores to W
+	movwf	TABLAT
+	tblwt*+
+	;incf	0x01, 1 , ACCESS
+	bra	write
+	
+	goto	start
 	
 addNext4Bit			    ; Adding the higher hexadecimal to the next RAM location in FSR
 	movff   0x01, TABLAT	    ; Move count to TABLAT
@@ -46,9 +67,6 @@ add8Bit				    ; Adding the lower two bytes to the next RAM location in FSR
 	movff   0x00, TABLAT	    ; Move count to TABLAT
 	movff	TABLAT, POSTINC0    ; This takes TABLAT to location at FSR, increasing FSR0 by 1
 	return
-	
-	goto	start
-	
 	end
 	
 ; CODE ENDS HERE
