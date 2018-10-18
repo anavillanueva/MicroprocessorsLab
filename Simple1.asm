@@ -34,3 +34,4 @@ loop 	tblrd*+			; move one byte from PM to TABLAT, increment TBLPRT
 	goto	0
 
 	end
+	; Test from Sema
