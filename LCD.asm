@@ -64,8 +64,11 @@ LCD_Top
 LCD_Write_Message	    ; Message stored at FSR2, length stored in W
 	movwf   LCD_counter
 LCD_Loop_message
-	movf    POSTINC2, W
-	call    LCD_Send_Byte_D
+	tblrd*+		    ; one byte from PM to TABLAT, increment TBLPRT
+	movf	TABLAT, W	    ; Moves data read to TABLAT to W
+	;movlw 111111
+	;movf    POSTINC2, W
+	call    LCD_Send_Byte_D	    ; Data stored in W
 	decfsz  LCD_counter
 	bra	LCD_Loop_message
 	return
@@ -98,7 +101,7 @@ LCD_Send_Byte_D		    ; Transmits byte stored in W to data reg
 	bsf	LATB, LCD_RS    ; Data write set RS bit	    
         call    LCD_Enable  ; Pulse enable Bit 
 	movlw	.10	    ; delay 40us
-	call	LCD_delay_x4us
+	call	LCD_delay_x4us 
 	return
 
 LCD_Enable	    ; pulse enable bit LCD_E for 500ns

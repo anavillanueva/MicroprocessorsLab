@@ -21,6 +21,8 @@ UART_Setup
 UART_Transmit_Message	    ; Message stored at FSR2, length stored in W
     movwf   UART_counter
 UART_Loop_message
+    ;tblrd*+	
+    ;movff	TABLAT, W
     movf    POSTINC2, W
     call    UART_Transmit_Byte
     decfsz  UART_counter
@@ -28,6 +30,7 @@ UART_Loop_message
     return
 
 UART_Transmit_Byte	    ; Transmits byte stored in W
+    ;movlw   0xFF
     btfss   PIR1,TX1IF	    ; TX1IF is set when TXREG1 is empty
     bra	    UART_Transmit_Byte
     movwf   TXREG1
