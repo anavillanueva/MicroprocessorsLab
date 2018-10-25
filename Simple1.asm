@@ -12,14 +12,18 @@ myArray res 0x80    ; reserve 128 bytes for message data
 
 rst	code	0    ; reset vector
 	goto	setup
+	
 
+	
+	
 pdata	code    ; a section of programme memory for storing data
 	; ******* myTable, data in programme memory, and its length *****
 myTable data	    0xFF, 0xFE	; message, plus carriage return
-	constant    myTable_l=.17	; length of data
+	constant    myTable_l=.3	; length of data
 	
-yourTable data      "Fatih Eczanesi\n"
-	constant    yourTable_1 = .15   ; length of data
+yourTable data      "Hello World! XX \n"
+	constant    yourTable_1 = .16   ; length of data
+	
 	
 main	code
 	; ******* Programme FLASH read Setup Code ***********************
@@ -31,6 +35,26 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	
 	; ******* Main programme ****************************************
 start 	
+	
+	movlw   b'11110000'
+	movwf   PORTD
+	movlw   b'00001111'	    ; PORTD all inputs
+	movwf	TRISD
+input	
+	movlw	0xF1
+	CPFSEQ	PORTD, ACCESS
+	goto    secondbit
+	
+	call LCD_clear
+	
+	;CMP PORTD, b'00000001'
+	;JE 
+secondbit
+	movlw	0xF2
+	CPFSEQ	PORTD, ACCESS
+	goto    thirdbit
+	
+
 	;lfsr	FSR0, myArray	; Load FSR0 with address in RAM	
 	movlw	upper(myTable)	; address of data in PM
 	movwf	TBLPTRU		; load upper bits to TBLPTRU
@@ -49,6 +73,11 @@ start
 	movlw	myTable_l-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
 	
+thirdbit	
+	movlw	0xF4
+	CPFSEQ	PORTD, ACCESS
+	goto	input
+	
 	movlw	upper(yourTable)	; address of data in PM
 	movwf	TBLPTRU		; load upper bits to TBLPTRU
 	movlw	high(yourTable)	; address of data in PM
@@ -56,30 +85,28 @@ start
 	movlw	low(yourTable)	; address of data in PM
 	movwf	TBLPTRL		; load low byte to TBLPTRL
 	
-	
 	call	LCD_Bottom
 	movlw	yourTable_1-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
 	
-	;call	LCD_clear
-	goto	$		; goto current line in code
+	
+	goto	input 		; goto current line in code
 
 outputdata  
 	movlw	myTable_l-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
 	return
-	
-output  movlw	myTable_l-1	; output message to LCD (leave out "\n")
-	;lfsr	FSR2, myArray
-	call	LCD_Write_Message
 
 	movlw	myTable_l	; output message to UART
-	;lfsr	FSR2, myArray
 	call	UART_Transmit_Message
 	return
+	
 	; a delay subroutine if you need one, times around loop in delay_count
 delay	decfsz	delay_count	; decrement until zero
 	bra delay
 	return
 
+L7	call	LCD_clear
+	
+	
 	end
