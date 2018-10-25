@@ -73,13 +73,9 @@ input
 	movlw	0xF1
 	;CPFSEQ	0x01, ACCESS
 	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
-	goto    secondbit	    ; Skip the function corresponding to 0xF1
+	goto    secondcoln	    ; Skip the function corresponding to 0xF1
 	
-	call	delay		    ; Allow time to change PORTD
-	call	delay
-	call	delay
-	call	delay
-	
+	call	delay		    ; Allow time to change PORTD	
 	
 	movlw   b'00001111'
 	movwf   PORTD
@@ -88,30 +84,26 @@ input
 	;movff   PORTD, 0x02
 	
 	call	delay
-	call	delay
-	call	delay
 	
 	movlw	0x8F
 	;CPFSEQ	0x01, ACCESS
 	CPFSEQ	PORTD, ACCESS
-	goto    secondbit
+	goto    secondcoln
 	
 	call	LCD_clear		    ; Function for 0x11 button
 	goto    input
 	
-secondbit
+secondcoln
 	movlw   b'11110000'
 	movwf   PORTD
 	movlw   b'00001111'	    ; columns are read
 	movwf	TRISD
 	
 	call	delay
-	call	delay
-	call	delay
 	
 	movlw	0xF2
 	CPFSEQ	PORTD, ACCESS
-	goto    thirdbit
+	goto    thirdcoln
 	
 	movlw   b'00001111'
 	movwf   PORTD
@@ -119,12 +111,10 @@ secondbit
 	movwf	TRISD
 	
 	call	delay
-	call	delay
-	call	delay
 	
-	movlw	0x2F
+frstRow	movlw	0x2F
 	CPFSEQ	PORTD, ACCESS
-	goto    thirdbit
+	goto    sndRow
 		
 	movlw	upper(myTable)	; address of data in PM
 	movwf	TBLPTRU		; load upper bits to TBLPTRU
@@ -137,9 +127,9 @@ secondbit
 	movlw	myTable_l-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
 	
-	movlw	0x4F
+sndRow	movlw	0x4F
 	CPFSEQ	PORTD, ACCESS
-	goto    thirdbit
+	goto    thirdcoln
 	
 	
 	movlw	upper(eight)	; address of data in PM
@@ -154,7 +144,7 @@ secondbit
 	call	LCD_Write_Message
 	
 	goto    input
-thirdbit	
+thirdcoln	
 	movlw	0xF4
 	CPFSEQ	PORTD, ACCESS
 	goto	input
