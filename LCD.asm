@@ -61,7 +61,7 @@ LCD_Top
 	call	LCD_delay_x4us
 	return
 	
-LCD_Write_Message	    ; Message stored at FSR2, length stored in W
+LCD_Write_Message	    ; Message stored at TBLPTR, length stored in W
 	movwf   LCD_counter
 LCD_Loop_message
 	tblrd*+		    ; one byte from PM to TABLAT, increment TBLPRT

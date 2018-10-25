@@ -18,8 +18,11 @@ rst	code	0    ; reset vector
 	
 pdata	code    ; a section of programme memory for storing data
 	; ******* myTable, data in programme memory, and its length *****
-myTable data	    0xFF, 0xFE	; message, plus carriage return
-	constant    myTable_l=.3	; length of data
+myTable data	    "5"	; message, plus carriage return
+	constant    myTable_l=.2	; length of data
+
+eight	data	    "8"	; message, plus carriage return
+	constant    myTable_l=.2	; length of data
 	
 yourTable data      "Hello World! XX \n"
 	constant    yourTable_1 = .16   ; length of data
@@ -31,11 +34,33 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	bsf	EECON1, EEPGD 	; access Flash program memory
 	call	UART_Setup	; setup UART
 	call	LCD_Setup	; setup LCD
-	goto	start
+	;goto	start
+	goto	input
 	
 	; ******* Main programme ****************************************
 start 	
+	movlw   b'11110000'
+	movwf   PORTD
+	movlw   b'00001111'	    ; PORTD 0-3 inputs
+	movwf	TRISD
 	
+	call	delay
+	call	delay
+	call	delay
+	call	delay
+	call	delay
+
+	
+	movlw   b'00001111'
+	movwf   PORTD
+	movlw   b'11110000'	    ; PORTD 4-7 inputs
+	movwf	TRISD
+	
+	call	delay
+	call	delay
+	call	delay
+	
+	goto	start
 	
 input	
 	movlw   b'11110000'
@@ -45,11 +70,16 @@ input
 	;movff   PORTD, 0x01
 	
 	
-	
 	movlw	0xF1
 	;CPFSEQ	0x01, ACCESS
-	CPFSEQ	PORTD, ACCESS
-	goto    secondbit
+	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
+	goto    secondbit	    ; Skip the function corresponding to 0xF1
+	
+	call	delay		    ; Allow time to change PORTD
+	call	delay
+	call	delay
+	call	delay
+	
 	
 	movlw   b'00001111'
 	movwf   PORTD
@@ -57,20 +87,27 @@ input
 	movwf	TRISD
 	;movff   PORTD, 0x02
 	
-	movlw	0x1F
+	call	delay
+	call	delay
+	call	delay
+	
+	movlw	0x8F
 	;CPFSEQ	0x01, ACCESS
 	CPFSEQ	PORTD, ACCESS
 	goto    secondbit
 	
-	call LCD_clear
+	call	LCD_clear		    ; Function for 0x11 button
+	goto    input
 	
-	;CMP PORTD, b'00000001'
-	;JE 
 secondbit
 	movlw   b'11110000'
 	movwf   PORTD
 	movlw   b'00001111'	    ; columns are read
 	movwf	TRISD
+	
+	call	delay
+	call	delay
+	call	delay
 	
 	movlw	0xF2
 	CPFSEQ	PORTD, ACCESS
@@ -81,30 +118,42 @@ secondbit
 	movlw   b'11110000'	    ; rows are read
 	movwf	TRISD
 	
+	call	delay
+	call	delay
+	call	delay
+	
 	movlw	0x2F
 	CPFSEQ	PORTD, ACCESS
 	goto    thirdbit
-	
-	
-
-	;lfsr	FSR0, myArray	; Load FSR0 with address in RAM	
+		
 	movlw	upper(myTable)	; address of data in PM
 	movwf	TBLPTRU		; load upper bits to TBLPTRU
 	movlw	high(myTable)	; address of data in PM
 	movwf	TBLPTRH		; load high byte to TBLPTRH
 	movlw	low(myTable)	; address of data in PM
 	movwf	TBLPTRL		; load low byte to TBLPTRL
-;	movlw	myTable_l	; bytes to read
-;	movwf 	counter		; our counter register
-;loop 	tblrd*+			; one byte from PM to TABLAT, increment TBLPRT
-;	movff	TABLAT, POSTINC0; move data from TABLAT to (FSR0), inc FSR0	
-;	decfsz	counter		; count down to zero
-;	bra	loop		; keep going until finished
 
 	call	LCD_Top
 	movlw	myTable_l-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
 	
+	movlw	0x4F
+	CPFSEQ	PORTD, ACCESS
+	goto    thirdbit
+	
+	
+	movlw	upper(eight)	; address of data in PM
+	movwf	TBLPTRU		; load upper bits to TBLPTRU
+	movlw	high(eight)	; address of data in PM
+	movwf	TBLPTRH		; load high byte to TBLPTRH
+	movlw	low(eight)	; address of data in PM
+	movwf	TBLPTRL		; load low byte to TBLPTRL
+	
+	call	LCD_Top
+	movlw	yourTable_1-1	; output message to LCD (leave out "\n")
+	call	LCD_Write_Message
+	
+	goto    input
 thirdbit	
 	movlw	0xF4
 	CPFSEQ	PORTD, ACCESS
@@ -137,8 +186,19 @@ outputdata
 delay	decfsz	delay_count	; decrement until zero
 	bra delay
 	return
-
-L7	call	LCD_clear
 	
+	;lfsr	FSR0, myArray	; Load FSR0 with address in RAM	
+;	movlw	upper(myTable)	; address of data in PM
+;	movwf	TBLPTRU		; load upper bits to TBLPTRU
+;	movlw	high(myTable)	; address of data in PM
+;	movwf	TBLPTRH		; load high byte to TBLPTRH
+;	movlw	low(myTable)	; address of data in PM
+;	movwf	TBLPTRL		; load low byte to TBLPTRL
+;	movlw	myTable_l	; bytes to read
+;	movwf 	counter		; our counter register
+;loop 	tblrd*+			; one byte from PM to TABLAT, increment TBLPRT
+;	movff	TABLAT, POSTINC0; move data from TABLAT to (FSR0), inc FSR0	
+;	decfsz	counter		; count down to zero
+;	bra	loop		; keep going until finished
 	
 	end
