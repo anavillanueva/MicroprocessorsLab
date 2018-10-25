@@ -36,12 +36,29 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	; ******* Main programme ****************************************
 start 	
 	
+	
+input	
 	movlw   b'11110000'
 	movwf   PORTD
 	movlw   b'00001111'	    ; PORTD all inputs
 	movwf	TRISD
-input	
+	;movff   PORTD, 0x01
+	
+	
+	
 	movlw	0xF1
+	;CPFSEQ	0x01, ACCESS
+	CPFSEQ	PORTD, ACCESS
+	goto    secondbit
+	
+	movlw   b'00001111'
+	movwf   PORTD
+	movlw   b'11110000'	    ; PORTD all inputs
+	movwf	TRISD
+	;movff   PORTD, 0x02
+	
+	movlw	0x1F
+	;CPFSEQ	0x01, ACCESS
 	CPFSEQ	PORTD, ACCESS
 	goto    secondbit
 	
@@ -50,9 +67,24 @@ input
 	;CMP PORTD, b'00000001'
 	;JE 
 secondbit
+	movlw   b'11110000'
+	movwf   PORTD
+	movlw   b'00001111'	    ; columns are read
+	movwf	TRISD
+	
 	movlw	0xF2
 	CPFSEQ	PORTD, ACCESS
 	goto    thirdbit
+	
+	movlw   b'00001111'
+	movwf   PORTD
+	movlw   b'11110000'	    ; rows are read
+	movwf	TRISD
+	
+	movlw	0x2F
+	CPFSEQ	PORTD, ACCESS
+	goto    thirdbit
+	
 	
 
 	;lfsr	FSR0, myArray	; Load FSR0 with address in RAM	
