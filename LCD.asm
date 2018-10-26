@@ -66,7 +66,6 @@ LCD_Write_Message	    ; Message stored at TBLPTR, length stored in W
 LCD_Loop_message
 	tblrd*+		    ; one byte from PM to TABLAT, increment TBLPRT
 	movf	TABLAT, W	    ; Moves data read to TABLAT to W
-	;movlw 111111
 	;movf    POSTINC2, W
 	call    LCD_Send_Byte_D	    ; Data stored in W
 	decfsz  LCD_counter

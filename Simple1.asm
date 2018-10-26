@@ -22,7 +22,6 @@ myTable data	    "5"	; message, plus carriage return
 	constant    myTable_l=.2	; length of data
 
 eight	data	    "8"	; message, plus carriage return
-	constant    myTable_l=.2	; length of data
 	
 yourTable data      "Hello World! XX \n"
 	constant    yourTable_1 = .16   ; length of data
@@ -34,35 +33,14 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	bsf	EECON1, EEPGD 	; access Flash program memory
 	call	UART_Setup	; setup UART
 	call	LCD_Setup	; setup LCD
-	;goto	start
+	bsf	PADCFG1, RDPU
+	clrf	LATD
 	goto	input
 	
+	
 	; ******* Main programme ****************************************
-start 	
-	movlw   b'11110000'
-	movwf   PORTD
-	movlw   b'00001111'	    ; PORTD 0-3 inputs
-	movwf	TRISD
+input 	
 	
-	call	delay
-	call	delay
-	call	delay
-	call	delay
-	call	delay
-
-	
-	movlw   b'00001111'
-	movwf   PORTD
-	movlw   b'11110000'	    ; PORTD 4-7 inputs
-	movwf	TRISD
-	
-	call	delay
-	call	delay
-	call	delay
-	
-	goto	start
-	
-input	
 	movlw   b'11110000'
 	movwf   PORTD
 	movlw   b'00001111'	    ; PORTD all inputs
@@ -85,7 +63,7 @@ input
 	
 	call	delay
 	
-	movlw	0x8F
+	movlw	0x1F
 	;CPFSEQ	0x01, ACCESS
 	CPFSEQ	PORTD, ACCESS
 	goto    secondcoln
