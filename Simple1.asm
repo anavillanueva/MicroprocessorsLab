@@ -18,14 +18,9 @@ rst	code	0    ; reset vector
 	
 pdata	code    ; a section of programme memory for storing data
 	; ******* myTable, data in programme memory, and its length *****
-myTable data	    "5"	; message, plus carriage return
-	constant    myTable_l=.2	; length of data
-
-eight	data	    "8"	; message, plus carriage return
 	
-yourTable data      "Hello World! XX \n"
-	constant    yourTable_1 = .16   ; length of data
-	
+outputs	data "147A2580369BFEDC "
+	constant    length=.2	; length of data
 	
 main	code
 	; ******* Programme FLASH read Setup Code ***********************
@@ -38,20 +33,29 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	goto	input
 	
 	
+	
 	; ******* Main programme ****************************************
-input 	
+	
+input 	movlw	upper(outputs)	; address of data in PM
+	movwf	TBLPTRU		; load upper bits to TBLPTRU
+	movlw	high(outputs)	; address of data in PM
+	movwf	TBLPTRH		; load high byte to TBLPTRH
+	movlw	low(outputs)	; address of data in PM
+	movwf	TBLPTRL		; load low byte to TBLPTRL
+	call	delay
+	
 	
 	movlw   b'11110000'
 	movwf   PORTD
 	movlw   b'00001111'	    ; PORTD all inputs
 	movwf	TRISD
-	;movff   PORTD, 0x01
 	
+	call	delay
 	
 	movlw	0xF1
-	;CPFSEQ	0x01, ACCESS
+	call	delay
 	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
-	goto    secondcoln	    ; Skip the function corresponding to 0xF1
+	goto	COL2
 	
 	call	delay		    ; Allow time to change PORTD	
 	
@@ -59,97 +63,156 @@ input
 	movwf   PORTD
 	movlw   b'11110000'	    ; PORTD all inputs
 	movwf	TRISD
-	;movff   PORTD, 0x02
 	
 	call	delay
+
+	btfsc	PORTD, 4
+	movlw	0x00
 	
-	movlw	0x1F
-	;CPFSEQ	0x01, ACCESS
-	CPFSEQ	PORTD, ACCESS
-	goto    secondcoln
+	btfsc	PORTD, 5
+	movlw	0x01
 	
-	call	LCD_clear		    ; Function for 0x11 button
+	btfsc	PORTD, 6;
+	movlw	0x02
+
+	btfsc	PORTD, 7;
+	movlw	0x03
+	
+	addwf	TBLPTR, 1, ACCESS
+	call	delay
+	
+	call	LCD_Top
+	movlw	length-1	; output message to LCD (leave out "\n")
+	call	LCD_Write_Message
+	call	delay
+	
 	goto    input
 	
-secondcoln
-	movlw   b'11110000'
-	movwf   PORTD
-	movlw   b'00001111'	    ; columns are read
-	movwf	TRISD
-	
-	call	delay
-	
+COL2
 	movlw	0xF2
-	CPFSEQ	PORTD, ACCESS
-	goto    thirdcoln
+	call	delay
+	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
+	goto	COL3
+	
+	call	delay		    ; Allow time to change PORTD	
 	
 	movlw   b'00001111'
 	movwf   PORTD
-	movlw   b'11110000'	    ; rows are read
+	movlw   b'11110000'	    ; PORTD all inputs
 	movwf	TRISD
 	
 	call	delay
 	
-frstRow	movlw	0x2F
-	CPFSEQ	PORTD, ACCESS
-	goto    sndRow
-		
-	movlw	upper(myTable)	; address of data in PM
-	movwf	TBLPTRU		; load upper bits to TBLPTRU
-	movlw	high(myTable)	; address of data in PM
-	movwf	TBLPTRH		; load high byte to TBLPTRH
-	movlw	low(myTable)	; address of data in PM
-	movwf	TBLPTRL		; load low byte to TBLPTRL
+	btfsc	PORTD, 4
+	movlw	0x04
+	
+	btfsc	PORTD, 5
+	movlw	0x05
+	
+	btfsc	PORTD, 6;
+	movlw	0x06
 
-	call	LCD_Top
-	movlw	myTable_l-1	; output message to LCD (leave out "\n")
-	call	LCD_Write_Message
+	btfsc	PORTD, 7;
+	movlw	0x07
 	
-sndRow	movlw	0x4F
-	CPFSEQ	PORTD, ACCESS
-	goto    thirdcoln
-	
-	
-	movlw	upper(eight)	; address of data in PM
-	movwf	TBLPTRU		; load upper bits to TBLPTRU
-	movlw	high(eight)	; address of data in PM
-	movwf	TBLPTRH		; load high byte to TBLPTRH
-	movlw	low(eight)	; address of data in PM
-	movwf	TBLPTRL		; load low byte to TBLPTRL
+	addwf	TBLPTR, 1, ACCESS
+	call	delay
 	
 	call	LCD_Top
-	movlw	yourTable_1-1	; output message to LCD (leave out "\n")
+	movlw	length-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
+	call	delay
 	
-	goto    input
-thirdcoln	
-	movlw	0xF4
-	CPFSEQ	PORTD, ACCESS
 	goto	input
 	
-	movlw	upper(yourTable)	; address of data in PM
-	movwf	TBLPTRU		; load upper bits to TBLPTRU
-	movlw	high(yourTable)	; address of data in PM
-	movwf	TBLPTRH		; load high byte to TBLPTRH
-	movlw	low(yourTable)	; address of data in PM
-	movwf	TBLPTRL		; load low byte to TBLPTRL
 	
-	call	LCD_Bottom
-	movlw	yourTable_1-1	; output message to LCD (leave out "\n")
-	call	LCD_Write_Message
+COL3
+	movlw	0xF4
+	call	delay
+	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
+	goto	COL4
 	
+	call	delay		    ; Allow time to change PORTD	
 	
-	goto	input 		; goto current line in code
+	movlw   b'00001111'
+	movwf   PORTD
+	movlw   b'11110000'	    ; PORTD all inputs
+	movwf	TRISD
+	
+	call	delay
+	
+	btfsc	PORTD, 4
+	movlw	0x08
+	
+	btfsc	PORTD, 5
+	movlw	0x09
+	
+	btfsc	PORTD, 6;
+	movlw	0x0A
 
-outputdata  
-	movlw	myTable_l-1	; output message to LCD (leave out "\n")
-	call	LCD_Write_Message
-	return
+	btfsc	PORTD, 7;
+	movlw	0x0B
 
-	movlw	myTable_l	; output message to UART
-	call	UART_Transmit_Message
-	return
+	addwf	TBLPTR, 1, ACCESS
+	call	delay
 	
+	call	LCD_Top
+	movlw	length-1	; output message to LCD (leave out "\n")
+	call	LCD_Write_Message
+	call	delay
+	
+	goto	input
+	
+COL4
+	movlw	0xF8
+	call	delay
+	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
+	goto	BLANK
+	
+	call	delay		    ; Allow time to change PORTD	
+	
+	movlw   b'00001111'
+	movwf   PORTD
+	movlw   b'11110000'	    ; PORTD all inputs
+	movwf	TRISD
+	
+	call	delay
+	
+	btfsc	PORTD, 4
+	movlw	0x0C
+	
+	btfsc	PORTD, 5
+	movlw	0x0D
+	
+	btfsc	PORTD, 6;
+	movlw	0x0E
+
+	btfsc	PORTD, 7;
+	movlw	0x0F
+	
+	addwf	TBLPTR, 1, ACCESS
+	call	delay
+	
+	call	LCD_Top
+	movlw	length-1	; output message to LCD (leave out "\n")
+	call	LCD_Write_Message
+	call	delay
+	
+	goto	input
+	
+BLANK	
+	;call	LCD_clear
+	movlw	0x10
+	call	delay
+	addwf	TBLPTR, 1, ACCESS
+	call	delay
+	
+	call	LCD_Top
+	movlw	length-1	; output message to LCD (leave out "\n")
+	call	LCD_Write_Message
+	call	delay
+	
+	goto	input
 	; a delay subroutine if you need one, times around loop in delay_count
 delay	decfsz	delay_count	; decrement until zero
 	bra delay
@@ -168,5 +231,8 @@ delay	decfsz	delay_count	; decrement until zero
 ;	movff	TABLAT, POSTINC0; move data from TABLAT to (FSR0), inc FSR0	
 ;	decfsz	counter		; count down to zero
 ;	bra	loop		; keep going until finished
+	
+
+	
 	
 	end
