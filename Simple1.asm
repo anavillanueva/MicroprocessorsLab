@@ -1,11 +1,12 @@
 	#include p18f87k22.inc
 
 	extern	UART_Setup, UART_Transmit_Message  ; external UART subroutines
-	extern  LCD_Setup, LCD_Write_Message, LCD_clear, LCD_Bottom, LCD_Top    ; external LCD subroutines
+	extern  LCD_Setup, LCD_Write_Message, LCD_clear, LCD_Bottom, LCD_Top, LCD_next, LCD_delay_ms  ; external LCD subroutines
 	
 acs0	udata_acs   ; reserve data space in access ram
 counter	    res 1   ; reserve one byte for a counter variable
 delay_count res 1   ; reserve one byte for counter in the delay routine
+
 
 tables	udata	0x400    ; reserve data anywhere in RAM (here at 0x400)
 myArray res 0x80    ; reserve 128 bytes for message data
@@ -22,6 +23,7 @@ pdata	code    ; a section of programme memory for storing data
 outputs	data "147A2580369BFEDC "
 	constant    length=.2	; length of data
 	
+	
 main	code
 	; ******* Programme FLASH read Setup Code ***********************
 setup	bcf	EECON1, CFGS	; point to Flash program memory  
@@ -33,7 +35,7 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	goto	input
 	
 	
-	
+	call	LCD_Top
 	; ******* Main programme ****************************************
 	
 input 	movlw	upper(outputs)	; address of data in PM
@@ -81,9 +83,12 @@ input 	movlw	upper(outputs)	; address of data in PM
 	addwf	TBLPTR, 1, ACCESS
 	call	delay
 	
-	call	LCD_Top
+	;call	LCD_next
 	movlw	length-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
+	movlw	0xFF
+	call	LCD_delay_ms
+	
 	call	delay
 	
 	goto    input
@@ -93,6 +98,8 @@ COL2
 	call	delay
 	CPFSEQ	PORTD, ACCESS	    ; Compare PORTD input to W, skip if not equal
 	goto	COL3
+	;movlw	0xF2
+	;movwf	0x10
 	
 	call	delay		    ; Allow time to change PORTD	
 	
@@ -118,9 +125,11 @@ COL2
 	addwf	TBLPTR, 1, ACCESS
 	call	delay
 	
-	call	LCD_Top
+	;call	LCD_next    
 	movlw	length-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
+	movlw	0xFF
+	call	LCD_delay_ms
 	call	delay
 	
 	goto	input
@@ -156,9 +165,11 @@ COL3
 	addwf	TBLPTR, 1, ACCESS
 	call	delay
 	
-	call	LCD_Top
+	;call	LCD_next
 	movlw	length-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
+	movlw	0xFF
+	call	LCD_delay_ms
 	call	delay
 	
 	goto	input
@@ -193,9 +204,11 @@ COL4
 	addwf	TBLPTR, 1, ACCESS
 	call	delay
 	
-	call	LCD_Top
+	;call	LCD_next
 	movlw	length-1	; output message to LCD (leave out "\n")
 	call	LCD_Write_Message
+	movlw	0xFF
+	call	LCD_delay_ms
 	call	delay
 	
 	goto	input
@@ -207,16 +220,17 @@ BLANK
 	addwf	TBLPTR, 1, ACCESS
 	call	delay
 	
-	call	LCD_Top
-	movlw	length-1	; output message to LCD (leave out "\n")
-	call	LCD_Write_Message
-	call	delay
+	;call	LCD_Top
+	;movlw	length-1	; output message to LCD (leave out "\n")
+	;call	LCD_Write_Message
+	;call	delay
 	
 	goto	input
 	; a delay subroutine if you need one, times around loop in delay_count
 delay	decfsz	delay_count	; decrement until zero
 	bra delay
 	return
+	
 	
 	;lfsr	FSR0, myArray	; Load FSR0 with address in RAM	
 ;	movlw	upper(myTable)	; address of data in PM
