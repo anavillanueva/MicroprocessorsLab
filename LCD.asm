@@ -10,7 +10,8 @@ LCD_tmp	    res 1   ; reserve 1 byte for temporary use
 LCD_counter res 1   ; reserve 1 byte for counting through nessage
 
 acs_ovr	access_ovr
-LCD_hex_tmp res 1   ; reserve 1 byte for variable LCD_hex_tmp	
+LCD_hex_tmp res 1   ; reserve 1 byte for variable LCD_hex_tmp
+LCD_dec_tmp res 1
 
 	constant    LCD_E=5	; LCD enable bit
     	constant    LCD_RS=4	; LCD register select bit
@@ -54,6 +55,11 @@ LCD_Write_Hex	    ; Writes byte stored in W as hex
 	swapf	LCD_hex_tmp,W	; high nibble first
 	call	LCD_Hex_Nib
 	movf	LCD_hex_tmp,W	; then low nibble
+	
+LCD_Write_Dec
+	movwf LCD_dec_tmp
+	
+	
 LCD_Hex_Nib	    ; writes low nibble as hex character
 	andlw	0x0F
 	movwf	LCD_tmp

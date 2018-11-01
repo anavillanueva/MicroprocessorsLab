@@ -3,40 +3,12 @@
 	extern	UART_Setup, UART_Transmit_Message   ; external UART subroutines
 	extern  LCD_Setup, LCD_Write_Message	    ; external LCD subroutines
 	extern	LCD_Write_Hex			    ; external LCD subroutines
-	extern  ADC_Setup, ADC_Read		    ; external ADC routines
+	
 	
 acs0	udata_acs   ; reserve data space in access ram
 counter	    res 1   ; reserve one byte for a counter variable
 delay_count res 1   ; reserve one byte for counter in the delay routine
-multiplicationhigh1  res 1 ; reserve one byte for high bits of 16 bit by 8 bit multiplication
-multiplicationlow1  res 1 ; reserve one byte for low bits of 16 bit by 8 bit multiplication
-multiplicationhigh2  res 1 
-multiplicationlow2  res 1
 
-resultlow res 1
-resultmiddle res 1
-resulthigh res 1
-result1low res 1
-result1middle res 1
-result1high res 1
-result2low res 1
-result2middle res 1
-result2high res 1
-result3low res 1
-result3lowermiddle res 1
-result3uppermiddle res 1
-result3high res 1
-
-hexvoltagehigh res 1
-hexvoltagelow res 1
- 
-khigh res 1
-klow res 1
- 
-voltage1 res 1
-voltage2 res 1
-voltage3 res 1
-voltage4 res 1
  
 tables	udata	0x400    ; reserve data anywhere in RAM (here at 0x400)
 myArray res 0x80    ; reserve 128 bytes for message data
@@ -55,188 +27,58 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	bsf	EECON1, EEPGD 	; access Flash program memory
 	call	UART_Setup	; setup UART
 	call	LCD_Setup	; setup LCD
-	call	ADC_Setup	; setup ADC
 	goto	start
 	
 	; ******* Main programme ****************************************
-start 	lfsr	FSR0, myArray	; Load FSR0 with address in RAM	
-	movlw	upper(myTable)	; address of data in PM
-	movwf	TBLPTRU		; load upper bits to TBLPTRU
-	movlw	high(myTable)	; address of data in PM
-	movwf	TBLPTRH		; load high byte to TBLPTRH
-	movlw	low(myTable)	; address of data in PM
-	movwf	TBLPTRL		; load low byte to TBLPTRL
-	movlw	myTable_l	; bytes to read
-	movwf 	counter		; our counter register
-loop 	tblrd*+			; one byte from PM to TABLAT, increment TBLPRT
-	movff	TABLAT, POSTINC0; move data from TABLAT to (FSR0), inc FSR0	
-	decfsz	counter		; count down to zero
-	bra	loop		; keep going until finished
-		
-	movlw	myTable_l-1	; output message to LCD (leave out "\n")
-	lfsr	FSR2, myArray
-	call	LCD_Write_Message
 
-	movlw	myTable_l	; output message to UART
-	lfsr	FSR2, myArray
-	call	UART_Transmit_Message
 	
-measure_loop
-	call	ADC_Read
-	movf ADRESH,W
-	movwf hexvoltagehigh
-	movf ADRESL,W
-	movwf hexvoltagelow
-	;movf	ADRESH,W
-	;call	LCD_Write_Hex
-	;movf	ADRESL,W
-	;call	LCD_Write_Hex
-	;goto	measure_loop		; goto current line in code
-	
-	
-	
-	movf hexvoltagelow,W
-	movwf 0x20
-	movf hexvoltagehigh,W
-	movwf 0x21
-	movlw 0x34
-	movwf 0x22
-	movlw 0x8A
-	movwf klow
-	movlw 0x41
-	movwf khigh
-	
-	
-	call multiply16by16
-	movf result3high,W
-	movwf voltage1
-	movf result3uppermiddle,W
-	movwf 0x22
-	movf result3lowermiddle,W
-	movwf 0x21
-	movf result3low, W
-	movwf 0x20
-	call multiply8by24
-	movf result3high,W
-	movwf voltage2
-	movf result3uppermiddle, W
-	movwf 0x22
-	movf result3lowermiddle, W
-	movwf 0x21
-	movf result3low, W
-	movwf 0x20
-	call multiply8by24
-	movf result3high,W
-	movwf voltage3
-	movf result3uppermiddle, W
-	movwf 0x22
-	movf result3lowermiddle, W
-	movwf 0x21
-	movf result3low, W
-	movwf 0x20
-	call multiply8by24
-	movf result3high,W
-	movwf voltage4
-	
-	movf	voltage1,W
-	call	LCD_Write_Hex
-	movf	voltage2,W
-	call	LCD_Write_Hex
-	movf	voltage3,W
-	call	LCD_Write_Hex
-	movf	voltage4,W
-	call	LCD_Write_Hex
-	
-	
-	
-	
-	
-	
-	
-	
-multiply8by24
-	movlw 0x0A
-	call multiply8by16
-	movlw 0x0A
-	mulwf 0x22
-	movff PRODH, multiplicationhigh1
-	movff PRODL, multiplicationlow1
-	movff resultlow, result3low
-	movff resultmiddle, result3lowermiddle
-	movf resulthigh,W
-	addwfc multiplicationlow1, 0, 0
-	movwf result3uppermiddle
-	movlw 0x0
-	addwfc multiplicationhigh1, 0, 0
-	movwf result3high
-	;call	LCD_Write_Hex
-	movf	result3uppermiddle,W
-	;call	LCD_Write_Hex
-	movf	result3lowermiddle,W
-	;call	LCD_Write_Hex
-	movf	result3low,W
-	;call	LCD_Write_Hex
-	return
-	
-multiply16by16
-	movf klow,W
-	call multiply8by16
-	movff resultlow, result1low
-	movff resultmiddle, result1middle
-	movff resulthigh, result1high
-	movf khigh,W
-	call multiply8by16
-	movff resultlow, result2low
-	movff resultmiddle, result2middle
-	movff resulthigh, result2high
-	movff result1low, result3low
-	movf result1middle,W
-	addwfc result2low, 0, 0
-	movwf result3lowermiddle
-	movf result1high,W
-	addwfc result2middle, 0, 0
-	movwf result3uppermiddle
-	movlw 0x0
-	addwfc result2high, 0, 0
-	movwf result3high
-	;call	LCD_Write_Hex
-	movf	result3uppermiddle,W
-	;call	LCD_Write_Hex
-	movf	result3lowermiddle,W
-	;call	LCD_Write_Hex
-	movf	result3low,W
-	;call	LCD_Write_Hex
+start	call	allhigh
+	call	delay
+	call	shape
+	call	delay
 	return
 	
 	
+allhigh	movlw   0x00	    ; PORTE all outputs
+	movwf	TRISE
+	movlw	0x00
+	movwf	PORTE	    ; set WR to low
 	
-
-multiply8by16
-	mulwf 0x20
-	movff PRODH, multiplicationhigh1
-	movff PRODL, multiplicationlow1
-	mulwf 0x21
-	movff PRODH, multiplicationhigh2
-	movff PRODL, multiplicationlow2
-	movff multiplicationlow1, resultlow
-	movf multiplicationhigh1,W
-	addwfc multiplicationlow2, 0, 0
-	movwf resultmiddle
-	movlw 0x0
-	addwfc multiplicationhigh2, 0, 0
-	movwf resulthigh
-	movf	resulthigh,W
-	;call	LCD_Write_Hex
-	movf	resultmiddle,W
-	;call	LCD_Write_Hex
-	movf	resultlow,W
-	;call	LCD_Write_Hex
+	call	delay
+	
+	movlw   0x00	    ; PORTD all outputs
+	movwf	TRISD
+	movlw	0xFF	    ; input data
+	movwf	PORTD
+	
+	call	delay
+	
+	movlw	0x80
+	movwf	PORTE	    ; set WR to high
+	
+	call	delay
 	return
 	
-
+shape	movlw   0x00	    ; PORTE all outputs
+	movwf	TRISE
+	movlw	0x00
+	movwf	PORTE	    ; set WR to low
 	
+	call	delay
 	
-
+	movlw   0x00	    ; PORTD all outputs
+	movwf	TRISD
+	movlw	0xAB	    ; input data
+	movwf	PORTD
+	
+	call	delay
+	
+	movlw	0x80
+	movwf	PORTE	    ; set WR to high
+	
+	call	delay
+	return
+	
 	; a delay subroutine if you need one, times around loop in delay_count
 delay	decfsz	delay_count	; decrement until zero
 	bra delay
