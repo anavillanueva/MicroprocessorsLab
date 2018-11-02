@@ -27,17 +27,47 @@ setup	bcf	EECON1, CFGS	; point to Flash program memory
 	bsf	EECON1, EEPGD 	; access Flash program memory
 	call	UART_Setup	; setup UART
 	call	LCD_Setup	; setup LCD
+	movlw   0x00	    ; PORTE all outputs
+	movwf	TRISE
+	movlw   0x00	    ; PORTD all outputs
+	movwf	TRISD
+	movlw   0x01
 	goto	start
 	
 	; ******* Main programme ****************************************
+	
+start	;movlw   b'00000000'
+	call	output
+	addlw	0x01
+	
+	;addlw	0x01
+	
+	goto	start
+	
+	
 
 	
-start	call	allhigh
+output	; Value to output stored in W
+
+	bcf	PORTE , 7	    ; set WR to low
+	
 	call	delay
-	call	shape
+	call	delay
+
+	movwf	PORTD
+	
+	call	delay
+
+	bsf	PORTE , 7	    ; set WR to high
+	
+	call	delay
 	call	delay
 	return
 	
+	; a delay subroutine if you need one, times around loop in delay_count
+delay	decfsz	delay_count	; decrement until zero
+	bra delay
+	return
 	
 allhigh	movlw   0x00	    ; PORTE all outputs
 	movwf	TRISE
@@ -59,29 +89,38 @@ allhigh	movlw   0x00	    ; PORTE all outputs
 	call	delay
 	return
 	
-shape	movlw   0x00	    ; PORTE all outputs
-	movwf	TRISE
-	movlw	0x00
-	movwf	PORTE	    ; set WR to low
-	
-	call	delay
-	
-	movlw   0x00	    ; PORTD all outputs
-	movwf	TRISD
-	movlw	0xAB	    ; input data
-	movwf	PORTD
-	
-	call	delay
-	
-	movlw	0x80
-	movwf	PORTE	    ; set WR to high
-	
-	call	delay
-	return
-	
-	; a delay subroutine if you need one, times around loop in delay_count
-delay	decfsz	delay_count	; decrement until zero
-	bra delay
-	return
-
+	movlw   b'00000001'
+	call	output
+	movlw   b'00000010'
+	call	output
+	movlw   b'00000100'
+	call	output
+	movlw   b'00001000'
+	call	output
+	movlw   b'00010000'
+	call	output
+	movlw   b'00100000'
+	call	output
+	movlw   b'01000000'
+	call	output
+	movlw   b'10000000'
+	call	output
+	movlw   0xFF
+	call	output
+	movlw   b'10000000'
+	call	output
+	movlw   b'01000000'
+	call	output
+	movlw   b'00100000'
+	call	output
+	movlw   b'00010000'
+	call	output
+	movlw   b'00001000'
+	call	output
+	movlw   b'00000100'
+	call	output
+	movlw   b'00000010'
+	call	output
+	movlw   b'00000001'
+	call	output
 	end
